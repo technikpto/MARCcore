@@ -3537,40 +3537,14 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
     }
 
     int nHeight = pindex->nHeight;
+
 if (block.IsProofOfStake()) {
         LOCK(cs_main);
 
         CCoinsViewCache coins(pcoinsTip);
 
         if (!coins.HaveInputs(block.vtx[1])) {
-        // if this is on a fork
-        if (!chainActive.Contains(pindexPrev) && pindexPrev != NULL) {
-            // start at the block we're adding on to
-            CBlockIndex *last = pindexPrev;
-
-            // while that block is not on the main chain
-            while (!chainActive.Contains(last) && pindexPrev != NULL) {
-                CBlock bl;
-                ReadBlockFromDisk(bl, last);
-                // loop through every spent input from said block
-                for (CTransaction t : bl.vtx) {
-                    for (CTxIn in: t.vin) {
-                        // loop through every spent input in the staking transaction of the new block
-                        for (CTxIn stakeIn : block.vtx[1].vin) {
-                            // if they spend the same input
-                            if (stakeIn.prevout == in.prevout) {
-                                // reject the block
-                                return false;
-                            }
-                        }
-                    }
-                }
-
-                // go to the parent block
-                last = pindexPrev->pprev;
-            }
-        }
-    }            // the inputs are spent at the chain tip so we should look at the recently spent outputs
+            // the inputs are spent at the chain tip so we should look at the recently spent outputs
 
             for (CTxIn in : block.vtx[1].vin) {
                 auto it = mapStakeSpent.find(in.prevout);
@@ -3583,7 +3557,7 @@ if (block.IsProofOfStake()) {
             }
         }
 
-    // if this is on a fork
+        // if this is on a fork
         if (!chainActive.Contains(pindexPrev) && pindexPrev != NULL) {
             // start at the block we're adding on to
             CBlockIndex *last = pindexPrev;
@@ -5934,3 +5908,4 @@ public:
         mapOrphanTransactionsByPrev.clear();
     }
 } instance_of_cmaincleanup;
+
